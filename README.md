@@ -71,6 +71,7 @@ Presenter - презентер содержит основную логику п
 
 
 #### Класс Api
+
 Содержит в себе базовую логику отправки запросов.
 
 Конструктор:  
@@ -86,6 +87,7 @@ Presenter - презентер содержит основную логику п
 `handleResponse(response: Response): Promise<object>` - защищенный метод проверяющий ответ сервера на корректность и возвращающий объект с данными полученный от сервера или отклоненный промис, в случае некорректных данных.
 
 #### Класс EventEmitter
+
 Брокер событий реализует паттерн "Наблюдатель", позволяющий отправлять события и подписываться на события, происходящие в системе. Класс используется для связи слоя данных и представления.
 
 Конструктор класса не принимает параметров.
@@ -97,4 +99,162 @@ Presenter - презентер содержит основную логику п
 `on<T extends object>(event: EventName, callback: (data: T) => void): void` - подписка на событие, принимает название события и функцию обработчик.  
 `emit<T extends object>(event: string, data?: T): void` - инициализация события. При вызове события в метод передается название события и объект с данными, который будет использован как аргумент для вызова обработчика.  
 `trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void` - возвращает функцию, при вызове которой инициализируется требуемое в параметрах событие с передачей в него данных из второго параметра.
+
+## Данные
+
+В проекте используются сущности товаров, покупателя и заказа.
+
+### Интерфейсы
+
+```ts
+type TPayment = 'card' | 'cash';
+
+interface IProduct {
+    id: string;
+    description: string;
+    image: string;
+    title: string;
+    category: string;
+    price: number | null;
+}
+
+interface IBuyer {
+    payment: TPayment;
+    email: string;
+    phone: string;
+    address: string;
+}
+
+interface IProductsResponse {
+    total: number;
+    items: IProduct[];
+}
+
+interface IOrder extends IBuyer {
+    items: string[];
+    total: number;
+}
+
+interface IOrderResult {
+    id: string;
+    total: number;
+}
+```
+
+## Модели данных
+
+### Класс `ProductsModel`
+
+Назначение: хранение каталога товаров и выбранного товара для детального просмотра.
+
+Конструктор:
+
+- `constructor()` — инициализирует пустой каталог и отсутствие выбранного товара.
+
+Поля:
+
+- `_products: IProduct[]` — текущий каталог.
+- `_selectedProduct: IProduct | null` — товар, выбранный для просмотра.
+
+Методы:
+
+- `setProducts(products: IProduct[]): void` — сохраняет массив товаров.
+- `getProducts(): IProduct[]` — возвращает массив товаров.
+- `getProductById(id: string): IProduct | undefined` — возвращает товар по `id`.
+- `setSelectedProduct(product: IProduct | null): void` — сохраняет выбранный товар.
+- `getSelectedProduct(): IProduct | null` — возвращает выбранный товар.
+
+### Класс `CartModel`
+
+Назначение: хранение товаров, добавленных в корзину.
+
+Конструктор:
+
+- `constructor()` — инициализирует пустой массив товаров корзины.
+
+Поле:
+
+- `_items: IProduct[]` — список товаров в корзине.
+
+Методы:
+
+- `getItems(): IProduct[]` — возвращает товары корзины.
+- `addItem(product: IProduct): void` — добавляет товар (без дубликатов и без товаров с `price: null`).
+- `removeItem(product: IProduct): void` — удаляет товар из корзины.
+- `clear(): void` — очищает корзину.
+- `getTotal(): number` — считает суммарную стоимость.
+- `getCount(): number` — возвращает количество товаров в корзине.
+- `contains(id: string): boolean` — проверяет наличие товара по `id`.
+
+### Класс `BuyerModel`
+
+Назначение: хранение и валидация данных покупателя.
+
+Конструктор:
+
+- `constructor()` — инициализирует пустые значения контактов и отсутствие выбранного способа оплаты.
+
+Поле:
+
+- `_payment: TPayment | null`, `_email: string`, `_phone: string`, `_address: string` — состояние покупателя.
+
+Методы:
+
+- `setData(data: Partial<IBuyer>): void` — частично обновляет данные покупателя.
+- `getData(): Partial<IBuyer>` — возвращает текущие данные.
+- `clear(): void` — очищает данные.
+- `validate(): Partial<Record<keyof IBuyer, string>>` — возвращает объект ошибок валидации.
+
+## Компоненты представления
+
+### Класс `Modal`
+
+Назначение: управление модальным окном, его содержимым и событиями открытия/закрытия.
+
+Конструктор:
+
+- `constructor(container: HTMLElement, events: IEvents)` — принимает контейнер модального окна и брокер событий.
+
+Поля:
+
+- `container: HTMLElement` — корневой элемент модального окна.
+- `content: HTMLElement` — контейнер для содержимого модального окна.
+- `closeButton: HTMLButtonElement` — кнопка закрытия.
+- `events: IEvents` — интерфейс событий для уведомлений о состоянии модального окна.
+
+Методы:
+
+- `open(content: HTMLElement): void` — показывает модальное окно и вставляет контент.
+- `close(): void` — закрывает модальное окно и очищает контент.
+- `setContent(content: HTMLElement): void` — заменяет контент модального окна.
+- `clearContent(): void` — очищает контейнер контента.
+
+## Слой коммуникации
+
+### Класс `WebLarekApi`
+
+Назначение: коммуникационный слой для работы с API магазина через композицию с базовым `Api`.
+
+Конструктор:
+
+- `constructor(api: IApi)` — принимает объект, реализующий интерфейс `IApi`.
+
+Методы:
+
+- `getProducts(): Promise<IProduct[]>` — делает `GET` запрос на `'/product'` и возвращает массив товаров.
+- `postOrder(order: IOrder): Promise<IOrderResult>` — делает `POST` запрос на `'/order'` и возвращает подтверждение заказа.
+
+## Проверка в `main.ts`
+
+В `src/main.ts` выполнены:
+
+- создание экземпляров `ProductsModel`, `CartModel`, `BuyerModel`, `WebLarekApi`;
+- тестирование методов моделей через `console.log`;
+- запрос на сервер для получения каталога через `getProducts()`;
+- сохранение массива товаров в `ProductsModel` и вывод в консоль;
+- рендер каталога в `.gallery` из шаблона `#card-catalog`;
+- открытие модального окна товара по клику на карточку (шаблон `#card-preview`) с действиями `Купить`/`Удалить из корзины`;
+- открытие корзины по иконке в шапке, пересчёт счётчика, суммы и empty-state;
+- двухшаговое оформление заказа (шаг оплаты и адреса, шаг контактов) с валидацией на основе `BuyerModel`;
+- отправка заказа через `postOrder(...)`, показ `success`-экрана, очистка `CartModel` и `BuyerModel`.
 

@@ -2,11 +2,11 @@ export function pascalToKebab(value: string): string {
     return value.replace(/([a-z0–9])([A-Z])/g, "$1-$2").toLowerCase();
 }
 
-export function isSelector(x: any): x is string {
+export function isSelector(x: unknown): x is string {
     return (typeof x === "string") && x.length > 1;
 }
 
-export function isEmpty(value: any): boolean {
+export function isEmpty(value: unknown): boolean {
     return value === null || value === undefined;
 }
 
@@ -118,14 +118,14 @@ export function createElement<
     children?: HTMLElement | HTMLElement []
 ): T {
     const element = document.createElement(tagName) as T;
+    const elementRecord = element as unknown as Record<string, unknown>;
     if (props) {
         for (const key in props) {
             const value = props[key];
             if (isPlainObject(value) && key === 'dataset') {
                 setElementData(element, value);
             } else {
-                // @ts-expect-error fix indexing later
-                element[key] = isBoolean(value) ? value : String(value);
+                elementRecord[key] = isBoolean(value) ? value : String(value);
             }
         }
     }
