@@ -8,13 +8,7 @@ export class CartModel {
     }
 
     addItem(product: IProduct): void {
-        if (product.price === null) {
-            return;
-        }
-
-        if (!this.contains(product.id)) {
-            this._items.push(product);
-        }
+        this._items.push(product);
     }
 
     removeItem(product: IProduct): void {
@@ -22,7 +16,7 @@ export class CartModel {
     }
 
     clear(): void {
-        this._items = [];
+        this._items.splice(0, this._items.length);
     }
 
     getTotal(): number {

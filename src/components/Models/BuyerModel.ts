@@ -3,7 +3,7 @@ import { IBuyer, TPayment } from '../../types';
 type ValidationErrors = Partial<Record<keyof IBuyer, string>>;
 
 export class BuyerModel {
-    private _payment: TPayment | null = null;
+    private _payment: TPayment = '';
     private _email: string = '';
     private _phone: string = '';
     private _address: string = '';
@@ -15,9 +15,9 @@ export class BuyerModel {
         if (data.address !== undefined) this._address = data.address;
     }
 
-    getData(): Partial<IBuyer> {
+    getData(): IBuyer {
         return {
-            payment: this._payment ?? undefined,
+            payment: this._payment,
             email: this._email,
             phone: this._phone,
             address: this._address,
@@ -25,7 +25,7 @@ export class BuyerModel {
     }
 
     clear(): void {
-        this._payment = null;
+        this._payment = '';
         this._email = '';
         this._phone = '';
         this._address = '';
@@ -34,20 +34,20 @@ export class BuyerModel {
     validate(): ValidationErrors {
         const errors: ValidationErrors = {};
 
-        if (!this._payment) {
-            errors.payment = 'Не выбран способ оплаты';
+        if (!this._payment.trim()) {
+            errors.payment = 'Выберите способ оплаты';
         }
 
         if (!this._address) {
-            errors.address = 'Укажите адрес';
+            errors.address = 'Введите адрес';
         }
 
         if (!this._email) {
-            errors.email = 'Укажите email';
+            errors.email = 'Введите email';
         }
 
         if (!this._phone) {
-            errors.phone = 'Укажите телефон';
+            errors.phone = 'Введите телефон';
         }
 
         return errors;
