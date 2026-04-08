@@ -1,22 +1,12 @@
-import { IEvents } from '../base/Events';
+import { ensureElement } from '../../utils/utils';
 
 export class Modal {
     protected content: HTMLElement;
     protected closeButton: HTMLButtonElement;
 
-    constructor(
-        protected container: HTMLElement,
-        protected events: IEvents,
-    ) {
-        const content = this.container.querySelector<HTMLElement>('.modal__content');
-        const closeButton = this.container.querySelector<HTMLButtonElement>('.modal__close');
-
-        if (!content || !closeButton) {
-            throw new Error('Modal markup is invalid: required elements are missing');
-        }
-
-        this.content = content;
-        this.closeButton = closeButton;
+    constructor(protected container: HTMLElement) {
+        this.content = ensureElement<HTMLElement>('.modal__content', this.container);
+        this.closeButton = ensureElement<HTMLButtonElement>('.modal__close', this.container);
 
         this.content.addEventListener('click', (evt) => {
             evt.stopPropagation();
@@ -36,20 +26,14 @@ export class Modal {
     open(content: HTMLElement): void {
         this.setContent(content);
         this.container.classList.add('modal_active');
-        this.events.emit('modal:open');
     }
 
     close(): void {
         this.container.classList.remove('modal_active');
-        this.clearContent();
-        this.events.emit('modal:close');
+        this.content.replaceChildren();
     }
 
     setContent(content: HTMLElement): void {
         this.content.replaceChildren(content);
-    }
-
-    clearContent(): void {
-        this.content.innerHTML = '';
     }
 }
