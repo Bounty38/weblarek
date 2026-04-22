@@ -4,7 +4,6 @@ import { Component } from "../base/Component";
 import { IEvents } from "../base/Events";
 
 interface CardData{
-    id: string;
     title: string;
     price: number | null;
 }
@@ -16,7 +15,6 @@ interface CardGalleryData extends CardData{
 
 interface CardDetailsData extends CardGalleryData{
     description: string;
-    isInCart: boolean;
     buttonDisabled: boolean;
     buttonText: string;
 }
@@ -44,10 +42,6 @@ export class Card<T extends CardData> extends Component<T> {
         this.cardTitle.textContent = value;
     }
 
-    set id(value: string) {
-        this.container.dataset.productId = value;
-    }
-
     set price(value: number | null) {
         this.cardPrice.textContent = value !== null ? `${value} синапсов` : 'Бесценно';
     }
@@ -65,9 +59,9 @@ export class CardGallery<CardData extends CardGalleryData> extends Card<CardData
         this.cardCategory = ensureElement<HTMLElement>('.card__category', this.container)
         this.actions = actions;
 
-        this.container.addEventListener('click', (event) => {
-            this.actions?.onClick?.(event)
-        })
+        if (this.actions?.onClick) {
+            this.container.addEventListener('click', this.actions.onClick)
+        }
     }
 
     set image(value: string) {
@@ -86,7 +80,6 @@ export class CardDetails extends CardGallery<CardDetailsData> {
     protected cardDescription: HTMLElement;
     protected cardButton: HTMLButtonElement;
     protected readonly event: IEvents;
-    protected isProductInCart = false;
 
     constructor(container: HTMLElement, event: IEvents) {
         super(container);
@@ -97,16 +90,11 @@ export class CardDetails extends CardGallery<CardDetailsData> {
 
         this.cardButton.addEventListener('click', (evt) => {
             evt.stopPropagation();
-            const productId = this.container.dataset.productId;
-            if (!productId || this.cardButton.disabled) {
+            if (this.cardButton.disabled) {
                 return;
             }
 
-            if (this.isProductInCart) {
-                this.event.emit('basket.remove', { productId });
-            } else {
-                this.event.emit('basket.add', { productId });
-            }
+            this.event.emit('preview.toggle');
         })
     }
 
@@ -120,10 +108,6 @@ export class CardDetails extends CardGallery<CardDetailsData> {
 
     set buttonDisabled(value: boolean) {
         this.cardButton.disabled = value;
-    }
-
-    set isInCart(value: boolean) {
-        this.isProductInCart = value;
     }
 }
 

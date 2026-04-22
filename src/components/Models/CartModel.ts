@@ -26,10 +26,6 @@ export class CartModel {
     this.emitUpdate();
   }
 
-  deleteItem(productId: string): void {
-    this.removeItem(productId);
-  }
-
   clear(): void {
     this.items = [];
     this.emitUpdate();

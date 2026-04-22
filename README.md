@@ -106,6 +106,8 @@ npm run build
 
 ### ApiPostMethods
 
+Тип HTTP-метода для мутационных запросов API при отправке данных на сервер.
+
 - 'POST' | 'PUT' | 'DELETE'
 
 ### IApi
@@ -166,7 +168,7 @@ npm run build
 
 Поля:
 
-- products: IProduct[]
+- products: IProduct[]: текущий список товаров каталога, который отображается в галерее.
 - selectedProduct: IProduct | null
 - event: IEvents
 
@@ -202,7 +204,6 @@ npm run build
 - addItem(product: IProduct): void
 - removeItem(productId: string): void
 - clear(): void
-- deleteItem(productId: string): void: совместимость, вызывает removeItem.
 - cleanCart(): void: совместимость, вызывает clear.
 - getQuantity(): number
 - getItems(): IProduct[]
@@ -280,7 +281,6 @@ npm run build
 
 Публичные сеттеры:
 
-- id: string: записывает productId в dataset.
 - title: string
 - price: number | null
 
@@ -328,16 +328,10 @@ npm run build
 Публичные сеттеры:
 
 - description: string
-- isInCart: boolean
 - buttonDisabled: boolean
 - buttonText: string
 
-События:
-
-- basket.add, payload: { productId: string }
-- basket.remove, payload: { productId: string }
-
-Событие выбирается по текущему состоянию isInCart.
+Логика добавления/удаления товара выполняется в Presenter на основе выбранного товара в модели каталога.
 
 ### Класс CardBasket
 
@@ -397,10 +391,6 @@ npm run build
 
 - counter: number
 
-События:
-
-- basket.open, payload: отсутствует
-
 ### Класс Basket
 
 Шаблон: #basket.
@@ -422,10 +412,6 @@ npm run build
 - list: HTMLElement[]
 - total: number
 - buttonDisabled: boolean
-
-События:
-
-- basket.buy, payload: отсутствует
 
 ### Класс Form
 
@@ -473,7 +459,6 @@ npm run build
 События:
 
 - order.change, payload: Partial[IBuyer]
-- order.submit, payload: отсутствует
 
 ### Класс ContactForm
 
@@ -498,7 +483,6 @@ npm run build
 События:
 
 - contacts.change, payload: { email?: string, phone?: string }
-- contacts.submit, payload: отсутствует
 
 ### Класс Modal
 
@@ -545,10 +529,6 @@ npm run build
 
 - total: number
 
-События:
-
-- success.close, payload: отсутствует
-
 ## Слой Presenter
 
 Реализован в src/main.ts.
@@ -576,15 +556,10 @@ npm run build
 | cart.update | { items: IProduct[] } | CartModel | Обновить список корзины, сумму и счетчик |
 | buyer.changed | Partial[IBuyer] | BuyerModel | Синхронизировать значения форм и ошибки валидации |
 | card.select | { productId: string } | CardGallery | Выбрать товар для просмотра |
-| basket.add | { productId: string } | CardDetails | Добавить товар в корзину |
-| basket.remove | { productId: string } | CardDetails или CardBasket | Удалить товар из корзины |
-| basket.open | отсутствует | Header | Открыть модалку корзины |
-| basket.buy | отсутствует | Basket | Перейти к шагу order |
+| basket.add | { productId: string } | Presenter | Добавить товар в корзину |
+| basket.remove | { productId: string } | CardBasket или Presenter | Удалить товар из корзины |
 | order.change | Partial[IBuyer] | OrderForm | Обновить payment/address в BuyerModel |
-| order.submit | отсутствует | Form(order) | Перейти к форме contacts |
 | contacts.change | { email?: string, phone?: string } | ContactForm | Обновить email/phone в BuyerModel |
-| contacts.submit | отсутствует | Form(contacts) | Отправить заказ на сервер |
-| success.close | отсутствует | Success | Закрыть модальное окно успеха |
 
 ## Соответствие TODO и REVIEW_CHECKLIST
 

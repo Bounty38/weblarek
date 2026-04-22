@@ -47,7 +47,6 @@ event.on<{ items: IProduct[] }>('products.update', ({ items }) => {
         );
 
         return card.render({
-            id: item.id,
             title: item.title,
             price: item.price,
             category: item.category,
@@ -69,13 +68,11 @@ event.on<IProduct | null>('product.current', (product) => {
     const inCart = cart.hasItem(product.id);
 
     modal.content = cardDetail.render({
-        id: product.id,
         title: product.title,
         price: product.price,
         category: product.category,
         image: product.image,
         description: product.description,
-        isInCart: inCart,
         buttonDisabled: unavailable,
         buttonText: unavailable ? 'Недоступно' : inCart ? 'Удалить из корзины' : 'Купить',
     });
@@ -88,7 +85,6 @@ event.on<{ items: IProduct[] }>('cart.update', ({ items }) => {
             onClick: () => event.emit('basket.remove', { productId: item.id })
         });
         return cartItem.render({
-            id: item.id,
             title: item.title,
             price: item.price,
             index: index + 1,
@@ -113,7 +109,13 @@ event.on<{ email?: string; phone?: string }>('contacts.change', (data) => {
 });
 
 event.on<Partial<IBuyer>>('buyer.changed', (data) => {
-    const currentBuyer = { ...buyer.getData(), ...data };
+    const currentBuyer = {
+        payment: data.payment ?? '',
+        address: data.address ?? '',
+        email: data.email ?? '',
+        phone: data.phone ?? '',
+    };
+
     orderForm.address = currentBuyer.address;
     orderForm.payment = currentBuyer.payment;
     contactForm.phone = currentBuyer.phone;
@@ -126,6 +128,21 @@ event.on<Partial<IBuyer>>('buyer.changed', (data) => {
 
     contactForm.valid = !errors.email && !errors.phone;
     contactForm.errors = getErrors(errors, ['email', 'phone']);
+});
+
+event.on('preview.toggle', () => {
+    const product = catalog.getSelectedProduct();
+    if (!product || product.price === null) {
+        return;
+    }
+
+    if (cart.hasItem(product.id)) {
+        cart.removeItem(product.id);
+    } else {
+        cart.addItem(product);
+    }
+
+    modal.close();
 });
 
 event.on<{ productId: string }>('basket.add', ({ productId }) => {
@@ -177,8 +194,11 @@ event.on('contacts.submit', async () => {
         modal.open();
         cart.cleanCart();
         buyer.clear();
-    } catch {
-        contactForm.errors = ['Не удалось отправить заказ'];
+    } catch (error) {
+        const message = error instanceof Error
+            ? error.message
+            : 'Неизвестная ошибка сервера';
+        contactForm.errors = [`Не удалось отправить заказ: ${message}`];
     }
 });
 
@@ -193,8 +213,16 @@ async function loadProducts(): Promise<void> {
     try {
         const data = await appApi.getProducts();
         catalog.setProducts(data.items);
-    } catch {
+    } catch (error) {
+        const message = error instanceof Error
+            ? error.message
+            : 'Неизвестная ошибка сервера';
         gallery.items = [];
+        modal.content = contactForm.render({
+            valid: false,
+            errors: [`Не удалось загрузить каталог: ${message}`],
+        });
+        modal.open();
     }
 }
 
