@@ -1,39 +1,41 @@
 import { ensureElement } from '../../utils/utils';
+import { Component } from "../base/Component";
+import { IEvents } from "../base/Events";
 
-export class Modal {
-    protected content: HTMLElement;
+interface ModalData {
+    content: HTMLElement;
+}
+
+export class Modal extends Component<ModalData> {
     protected closeButton: HTMLButtonElement;
+    protected modalContent: HTMLElement;
 
-    constructor(protected container: HTMLElement) {
-        this.content = ensureElement<HTMLElement>('.modal__content', this.container);
+    constructor(protected event: IEvents, container: HTMLElement) {
+        super(container);
+
         this.closeButton = ensureElement<HTMLButtonElement>('.modal__close', this.container);
-
-        this.content.addEventListener('click', (evt) => {
-            evt.stopPropagation();
-        });
+        this.modalContent = ensureElement<HTMLElement>('.modal__content', this.container);
 
         this.closeButton.addEventListener('click', () => {
             this.close();
-        });
+        })
 
-        this.container.addEventListener('click', (evt) => {
-            if (evt.target === this.container) {
+        this.container.addEventListener('click', (event) => {
+            if (event.target === event.currentTarget) {
                 this.close();
             }
         });
     }
 
-    open(content: HTMLElement): void {
-        this.setContent(content);
-        this.container.classList.add('modal_active');
+    set content(value: HTMLElement) {
+        this.modalContent.replaceChildren(value);
     }
 
-    close(): void {
-        this.container.classList.remove('modal_active');
-        this.content.replaceChildren();
+    open() {
+        this.container.classList.add('modal_active')
     }
 
-    setContent(content: HTMLElement): void {
-        this.content.replaceChildren(content);
+    close() {
+        this.container.classList.remove('modal_active')
     }
 }

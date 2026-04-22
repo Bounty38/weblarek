@@ -1,33 +1,57 @@
 import { IProduct } from '../../types';
+import { IEvents } from '../base/Events';
 
 export class CartModel {
-    private _items: IProduct[] = [];
+  private items: IProduct[] = [];
+  private readonly event: IEvents;
 
-    getItems(): IProduct[] {
-        return [...this._items];
-    }
+  constructor(event: IEvents) {
+    this.event = event;
+  }
 
-    addItem(product: IProduct): void {
-        this._items.push(product);
-    }
+  private emitUpdate(): void {
+    this.event.emit('cart.update', { items: this.getItems() });
+  }
 
-    removeItem(product: IProduct): void {
-        this._items = this._items.filter((item) => item.id !== product.id);
+  addItem(product: IProduct): void {
+    if (this.hasItem(product.id)) {
+      return;
     }
+    this.items.push(product);
+    this.emitUpdate();
+  }
 
-    clear(): void {
-        this._items.splice(0, this._items.length);
-    }
+  removeItem(productId: string): void {
+    this.items = this.items.filter((i) => i.id !== productId);
+    this.emitUpdate();
+  }
 
-    getTotal(): number {
-        return this._items.reduce((sum, item) => sum + (item.price ?? 0), 0);
-    }
+  deleteItem(productId: string): void {
+    this.removeItem(productId);
+  }
 
-    getCount(): number {
-        return this._items.length;
-    }
+  clear(): void {
+    this.items = [];
+    this.emitUpdate();
+  }
 
-    contains(id: string): boolean {
-        return this._items.some((item) => item.id === id);
-    }
+  cleanCart(): void {
+    this.clear();
+  }
+
+  getQuantity(): number {
+    return this.items.length;
+  }
+
+  getItems(): IProduct[] {
+    return [...this.items];
+  }
+
+  getTotalPrice(): number {
+    return this.items.reduce((total, item) => total + (item.price ?? 0), 0);
+  }
+
+  hasItem(id: string): boolean {
+    return this.items.some((item) => item.id === id);
+  }
 }

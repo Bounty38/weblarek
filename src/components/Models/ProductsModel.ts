@@ -1,26 +1,38 @@
 import { IProduct } from '../../types';
+import { IEvents } from '../base/Events';
 
 export class ProductsModel {
-    private _products: IProduct[] = [];
-    private _selectedProduct: IProduct | null = null;
+  private products: IProduct[] = [];
+  private selectedProduct: IProduct | null = null;
+  private readonly event: IEvents;
 
-    setProducts(products: IProduct[]): void {
-        this._products = [...products];
-    }
+  constructor(event: IEvents) {
+    this.event = event;
+  }
 
-    getProducts(): IProduct[] {
-        return [...this._products];
-    }
+  getProducts(): IProduct[] {
+    return [...this.products];
+  }
 
-    getProductById(id: string): IProduct | undefined {
-        return this._products.find((product) => product.id === id);
-    }
+  setProducts(products: IProduct[]): void {
+    this.products = [...products];
+    this.event.emit('products.update', { items: this.getProducts() });
+  }
 
-    setSelectedProduct(product: IProduct | null): void {
-        this._selectedProduct = product;
-    }
+  setSelectedProduct(product: IProduct | null): void {
+    this.selectedProduct = product;
+    this.event.emit('product.current', this.selectedProduct);
+  }
 
-    getSelectedProduct(): IProduct | null {
-        return this._selectedProduct;
-    }
+  selectProduct(product: IProduct): void {
+    this.setSelectedProduct(product);
+  }
+
+  getSelectedProduct(): IProduct | null {
+    return this.selectedProduct;
+  }
+
+  getProductById(productId: string): IProduct | null {
+    return this.products.find((p) => p.id === productId) ?? null;
+  }
 }
